@@ -84,6 +84,16 @@ final class BreakPanel: NSPanel, NSWindowDelegate {
 
     func show() {
         moveToPreferredPosition()
+        reassertTopMost()
+    }
+
+    /// 重新把面板推回 .screenSaver 層級的最前面。
+    ///
+    /// 休息中每次 tick 都會呼叫：實測極少數情況下視窗會被別的高層級視窗
+    /// （全螢幕切換、視訊會議、Mission Control 之類）卡到後面且 orderFrontRegardless
+    /// 只呼叫一次不會自己恢復，靠這個每 0.5 秒重來一次頂回去。
+    func reassertTopMost() {
+        level = .screenSaver
         orderFrontRegardless()
     }
 

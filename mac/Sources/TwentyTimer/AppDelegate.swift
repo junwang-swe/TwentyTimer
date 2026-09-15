@@ -34,10 +34,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         setUpPopover()
         setUpBreakPanel()
 
-        // 狀態一變就重畫選單列
+        // 狀態一變就重畫選單列；休息中順便每 tick 把面板頂回最前面，
+        // 防止極少數情況下被別的視窗卡住後就再也不會自己恢復。
         engine.objectWillChange
             .receive(on: RunLoop.main)
-            .sink { [weak self] in self?.refreshStatusItem() }
+            .sink { [weak self] in
+                guard let self else { return }
+                self.refreshStatusItem()
+                if self.engine.phase == .resting || self.engine.phase == .awaitingContinue {
+                    self.breakPanel.reassertTopMost()
+                }
+            }
             .store(in: &cancellables)
         settings.objectWillChange
             .receive(on: RunLoop.main)

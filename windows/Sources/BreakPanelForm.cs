@@ -253,11 +253,7 @@ sealed class BreakPanelForm : Form
         MoveToPreferredPosition();
         UpdateContent();
         if (!Visible) Show();
-        // 其他也搶 TOPMOST 的視窗（視訊會議、全螢幕播放器）可能疊在上面，
-        // BringToFront() 對 NOACTIVATE 視窗不保證真的重新排到最前，改直接呼叫
-        // SetWindowPos 強制插到 TOPMOST 群組最前。對應 mac 版把 level 提到 .screenSaver。
-        NativeMethods.SetWindowPos(Handle, NativeMethods.HWND_TOPMOST, 0, 0, 0, 0,
-            NativeMethods.SWP_NOMOVE | NativeMethods.SWP_NOSIZE | NativeMethods.SWP_NOACTIVATE);
+        ReassertTopMost();
     }
 
     public void HidePanel()
@@ -266,9 +262,23 @@ sealed class BreakPanelForm : Form
         Hide();
     }
 
+    /// <summary>
+    /// 把面板重新插到 TOPMOST 群組最前。其他也搶 TOPMOST 的視窗（視訊會議、
+    /// 全螢幕播放器）可能疊在上面，BringToFront() 對 NOACTIVATE 視窗不保證真的
+    /// 重新排到最前。休息中每個 tick 都會呼叫，避免極少數情況下視窗被卡到後面
+    /// 就再也不會自己恢復。對應 mac 版每 tick 呼叫 reassertTopMost() 重設 .screenSaver。
+    /// </summary>
+    private void ReassertTopMost()
+    {
+        NativeMethods.SetWindowPos(Handle, NativeMethods.HWND_TOPMOST, 0, 0, 0, 0,
+            NativeMethods.SWP_NOMOVE | NativeMethods.SWP_NOSIZE | NativeMethods.SWP_NOACTIVATE);
+    }
+
     private void OnEngineChanged()
     {
-        if (Visible) UpdateContent();
+        if (!Visible) return;
+        UpdateContent();
+        ReassertTopMost();
     }
 
     private void UpdateContent()
