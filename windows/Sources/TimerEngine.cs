@@ -74,11 +74,19 @@ sealed class TimerEngine : IDisposable
         var delta = (now - _lastTick).TotalSeconds;
         _lastTick = now;
         var sleptOrStalled = delta > SleepJumpThreshold.TotalSeconds;
+        var idle = IdleMonitor.SystemIdleSeconds();
+
+        if (ShouldResetForLongIdle(idle))
+        {
+            ResetToWork();
+            OnResumeWork?.Invoke(); // 不呼叫 ContinueWork，離開座位不算完成一輪
+            Changed?.Invoke();
+            return;
+        }
 
         switch (CurrentPhase)
         {
             case Phase.Working:
-                var idle = IdleMonitor.SystemIdleSeconds();
                 IsIdlePaused = !IsManuallyPaused && idle >= _settings.IdlePauseSeconds;
                 if (IsManuallyPaused || IsIdlePaused || sleptOrStalled) { Changed?.Invoke(); return; }
                 WorkRemaining -= delta;
@@ -125,6 +133,17 @@ sealed class TimerEngine : IDisposable
         }
 
         Changed?.Invoke();
+    }
+
+    /// <summary>
+    /// 閒置夠久就整個重設，不論現在是工作、等待、休息還是等按繼續。
+    /// 已經是全新一輪時不重複重設，避免閒置期間每個 tick 都觸發。
+    /// </summary>
+    private bool ShouldResetForLongIdle(double idle)
+    {
+        var minutes = _settings.IdleResetMinutes;
+        if (minutes <= 0 || idle < minutes * 60) return false;
+        return CurrentPhase != Phase.Working || WorkRemaining < _settings.WorkDuration.TotalSeconds;
     }
 
     /// <summary>現在有沒有理由不要跳彈窗</summary>

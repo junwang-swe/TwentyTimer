@@ -8,6 +8,8 @@ final class AppSettings: ObservableObject, Codable {
     @Published var workMinutes: Int = 20 { didSet { save() } }
     @Published var restSeconds: Int = 20 { didSet { save() } }
     @Published var idlePauseSeconds: Int = 120 { didSet { save() } }
+    /// 閒置超過這麼多分鐘就把計時整個重設回新的一輪工作（0 = 關閉）
+    @Published var idleResetMinutes: Int = 60 { didSet { save() } }
 
     // 音效
     @Published var soundOnRestStart: Bool = false { didSet { save() } }
@@ -74,7 +76,7 @@ final class AppSettings: ObservableObject, Codable {
     // MARK: - Codable
 
     enum CodingKeys: String, CodingKey {
-        case version, workMinutes, restSeconds, idlePauseSeconds
+        case version, workMinutes, restSeconds, idlePauseSeconds, idleResetMinutes
         case soundOnRestStart, soundOnRestEnd, soundName, soundGain, soundRepeat
         case deferWhenMicInUse, showTimeInMenuBar, moveMouseToButton, restoreCursorAfterClick, panelX, panelY
     }
@@ -85,6 +87,7 @@ final class AppSettings: ObservableObject, Codable {
         workMinutes = try c.decodeIfPresent(Int.self, forKey: .workMinutes) ?? workMinutes
         restSeconds = try c.decodeIfPresent(Int.self, forKey: .restSeconds) ?? restSeconds
         idlePauseSeconds = try c.decodeIfPresent(Int.self, forKey: .idlePauseSeconds) ?? idlePauseSeconds
+        idleResetMinutes = try c.decodeIfPresent(Int.self, forKey: .idleResetMinutes) ?? idleResetMinutes
         soundOnRestStart = try c.decodeIfPresent(Bool.self, forKey: .soundOnRestStart) ?? soundOnRestStart
         soundOnRestEnd = try c.decodeIfPresent(Bool.self, forKey: .soundOnRestEnd) ?? soundOnRestEnd
         soundName = try c.decodeIfPresent(String.self, forKey: .soundName) ?? soundName
@@ -104,6 +107,7 @@ final class AppSettings: ObservableObject, Codable {
         try c.encode(workMinutes, forKey: .workMinutes)
         try c.encode(restSeconds, forKey: .restSeconds)
         try c.encode(idlePauseSeconds, forKey: .idlePauseSeconds)
+        try c.encode(idleResetMinutes, forKey: .idleResetMinutes)
         try c.encode(soundOnRestStart, forKey: .soundOnRestStart)
         try c.encode(soundOnRestEnd, forKey: .soundOnRestEnd)
         try c.encode(soundName, forKey: .soundName)

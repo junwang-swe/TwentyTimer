@@ -94,6 +94,7 @@ Windows 版要確保有等效的區分。
   "workMinutes": 20,
   "restSeconds": 20,
   "idlePauseSeconds": 120,
+  "idleResetMinutes": 60,
   "soundOnRestStart": false,
   "soundOnRestEnd": true,
   "soundName": "Hero",

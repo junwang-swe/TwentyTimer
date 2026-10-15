@@ -63,6 +63,10 @@ sealed class SettingsForm : Form
         var idle = Stepper(30, 900, _settings.IdlePauseSeconds, v => _settings.IdlePauseSeconds = v, increment: 30);
         Row("閒置多久自動暫停", idle, () => $"{_settings.IdlePauseSeconds / 60} 分 {_settings.IdlePauseSeconds % 60} 秒");
 
+        var idleReset = Stepper(0, 480, _settings.IdleResetMinutes, v => _settings.IdleResetMinutes = v, increment: 15);
+        Row("閒置多久重設計時", idleReset, () => _settings.IdleResetMinutes == 0 ? "關閉" : $"{_settings.IdleResetMinutes} 分鐘");
+        Note("閒置超過此時間，不論正在倒數或休息，都會回到新的一輪工作時間。");
+
         Note("閒置偵測使用 Windows 原生 API（GetLastInputInfo），不需要任何權限。");
     }
 

@@ -14,6 +14,7 @@ sealed class AppSettings
         public int workMinutes { get; set; } = 20;
         public int restSeconds { get; set; } = 20;
         public int idlePauseSeconds { get; set; } = 120;
+        public int idleResetMinutes { get; set; } = 60;
         public bool soundOnRestStart { get; set; } = false;
         public bool soundOnRestEnd { get; set; } = true;
         public string soundName { get; set; } = "Hero";
@@ -40,6 +41,10 @@ sealed class AppSettings
 
     private int _idlePauseSeconds = 120;
     public int IdlePauseSeconds { get => _idlePauseSeconds; set => Set(ref _idlePauseSeconds, value); }
+
+    /// <summary>閒置超過這麼多分鐘就把計時整個重設回新的一輪工作（0 = 關閉）</summary>
+    private int _idleResetMinutes = 60;
+    public int IdleResetMinutes { get => _idleResetMinutes; set => Set(ref _idleResetMinutes, value); }
 
     private bool _soundOnRestStart;
     public bool SoundOnRestStart { get => _soundOnRestStart; set => Set(ref _soundOnRestStart, value); }
@@ -99,6 +104,7 @@ sealed class AppSettings
             s._workMinutes = p.workMinutes;
             s._restSeconds = p.restSeconds;
             s._idlePauseSeconds = p.idlePauseSeconds;
+            s._idleResetMinutes = p.idleResetMinutes;
             s._soundOnRestStart = p.soundOnRestStart;
             s._soundOnRestEnd = p.soundOnRestEnd;
             s._soundName = p.soundName;
@@ -139,6 +145,7 @@ sealed class AppSettings
             workMinutes = WorkMinutes,
             restSeconds = RestSeconds,
             idlePauseSeconds = IdlePauseSeconds,
+            idleResetMinutes = IdleResetMinutes,
             soundOnRestStart = SoundOnRestStart,
             soundOnRestEnd = SoundOnRestEnd,
             soundName = SoundName,

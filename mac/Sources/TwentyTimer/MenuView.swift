@@ -10,6 +10,8 @@ struct MenuView: View {
     var openStats: () -> Void
     var quit: () -> Void
 
+    @State private var customSnoozeText = ""
+
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             header
@@ -95,14 +97,32 @@ struct MenuView: View {
                     Text("勿擾")
                         .font(.system(size: 11))
                         .foregroundStyle(.secondary)
-                    Button("30 分") { engine.snooze(minutes: 30) }
-                        .frame(maxWidth: .infinity)
                     Button("60 分") { engine.snooze(minutes: 60) }
                         .frame(maxWidth: .infinity)
+                    TextField("自訂(分)", text: $customSnoozeText)
+                        .textFieldStyle(.roundedBorder)
+                        .frame(width: 70)
+                        .onSubmit(applyCustomSnooze)
+                    Button(action: applyCustomSnooze) {
+                        Image(systemName: "checkmark")
+                    }
+                    .disabled(customSnoozeMinutes == nil)
                 }
             }
         }
         .controlSize(.small)
+    }
+
+    /// 自訂勿擾分鐘數；非正整數視為無效
+    private var customSnoozeMinutes: Int? {
+        guard let m = Int(customSnoozeText.trimmingCharacters(in: .whitespaces)), m > 0 else { return nil }
+        return min(m, 1440)
+    }
+
+    private func applyCustomSnooze() {
+        guard let m = customSnoozeMinutes else { return }
+        engine.snooze(minutes: m)
+        customSnoozeText = ""
     }
 
     private var footer: some View {

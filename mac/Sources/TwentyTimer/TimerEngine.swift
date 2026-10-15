@@ -70,10 +70,16 @@ final class TimerEngine: ObservableObject {
         let delta = now.timeIntervalSince(lastTick)
         lastTick = now
         let sleptOrStalled = delta > sleepJumpThreshold
+        let idle = systemIdleSeconds()
+
+        if shouldResetForLongIdle(idle) {
+            resetToWork()
+            onResumeWork?()   // 不呼叫 continueWork，離開座位不算完成一輪
+            return
+        }
 
         switch phase {
         case .working:
-            let idle = systemIdleSeconds()
             isIdlePaused = !isManuallyPaused && idle >= TimeInterval(settings.idlePauseSeconds)
             guard !isManuallyPaused, !isIdlePaused, !sleptOrStalled else { return }
             workRemaining -= delta
@@ -107,6 +113,14 @@ final class TimerEngine: ObservableObject {
         case .awaitingContinue:
             break   // 只等使用者點擊
         }
+    }
+
+    /// 閒置夠久就整個重設，不論現在是工作、等待、休息還是等按繼續。
+    /// 已經是全新一輪時不重複重設，避免閒置期間每個 tick 都觸發。
+    private func shouldResetForLongIdle(_ idle: TimeInterval) -> Bool {
+        let minutes = settings.idleResetMinutes
+        guard minutes > 0, idle >= TimeInterval(minutes * 60) else { return false }
+        return phase != .working || workRemaining < settings.workDuration
     }
 
     /// 現在有沒有理由不要跳彈窗

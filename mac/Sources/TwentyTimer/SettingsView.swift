@@ -19,6 +19,13 @@ struct SettingsView: View {
                 Stepper(value: $settings.idlePauseSeconds, in: 30...900, step: 30) {
                     LabeledContent("閒置多久自動暫停", value: "\(settings.idlePauseSeconds / 60) 分 \(settings.idlePauseSeconds % 60) 秒")
                 }
+                Stepper(value: $settings.idleResetMinutes, in: 0...480, step: 15) {
+                    LabeledContent("閒置多久重設計時",
+                                   value: settings.idleResetMinutes == 0 ? "關閉" : "\(settings.idleResetMinutes) 分鐘")
+                }
+                Text("閒置超過此時間，不論正在倒數或休息，都會回到新的一輪工作時間。")
+                    .font(.system(size: 10))
+                    .foregroundStyle(.secondary)
                 Text("閒置偵測使用 macOS 原生 API，不需要任何權限。")
                     .font(.system(size: 10))
                     .foregroundStyle(.secondary)

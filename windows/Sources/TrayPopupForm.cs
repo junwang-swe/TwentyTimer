@@ -23,8 +23,9 @@ sealed class TrayPopupForm : Form
     private readonly Button _continueButton = new();
     private readonly Panel _dndRow = new();
     private readonly Label _dndLabel = new();
-    private readonly Button _snooze30Button = new();
     private readonly Button _snooze60Button = new();
+    private readonly TextBox _snoozeCustomBox = new();
+    private readonly Button _snoozeCustomOkButton = new();
     private readonly Button _cancelSnoozeButton = new();
 
     public Action? OpenSettings;
@@ -138,21 +139,32 @@ sealed class TrayPopupForm : Form
         _dndLabel.AutoSize = false;
         _dndLabel.TextAlign = ContentAlignment.MiddleLeft;
         _dndLabel.SetBounds(0, 0, 32, 30);
-        _snooze30Button.Text = "30 分";
-        _snooze30Button.SetBounds(36, 0, (PopupWidth - 32 - 36) / 2 - 4, 30);
-        _snooze30Button.Click += (_, _) => _engine.Snooze(30);
         _snooze60Button.Text = "60 分";
-        _snooze60Button.SetBounds(36 + (PopupWidth - 32 - 36) / 2, 0, (PopupWidth - 32 - 36) / 2 - 4, 30);
+        _snooze60Button.SetBounds(36, 0, 60, 30);
         _snooze60Button.Click += (_, _) => _engine.Snooze(60);
+        _snoozeCustomBox.PlaceholderText = "自訂(分)";
+        _snoozeCustomBox.SetBounds(100, 3, 60, 24);
+        _snoozeCustomBox.TextChanged += (_, _) => _snoozeCustomOkButton.Enabled = CustomSnoozeMinutes() != null;
+        _snoozeCustomBox.KeyDown += (_, e) =>
+        {
+            if (e.KeyCode != Keys.Enter) return;
+            e.SuppressKeyPress = true;
+            ApplyCustomSnooze();
+        };
+        _snoozeCustomOkButton.Text = "✓";
+        _snoozeCustomOkButton.Enabled = false;
+        _snoozeCustomOkButton.SetBounds(164, 0, PopupWidth - 32 - 164, 30);
+        _snoozeCustomOkButton.Click += (_, _) => ApplyCustomSnooze();
         _cancelSnoozeButton.Text = "取消勿擾";
         _cancelSnoozeButton.SetBounds(0, 0, PopupWidth - 32, 30);
         _cancelSnoozeButton.Click += (_, _) => _engine.CancelSnooze();
-        StyleSecondaryButton(_snooze30Button);
         StyleSecondaryButton(_snooze60Button);
+        StyleSecondaryButton(_snoozeCustomOkButton);
         StyleSecondaryButton(_cancelSnoozeButton);
         _dndRow.Controls.Add(_dndLabel);
-        _dndRow.Controls.Add(_snooze30Button);
         _dndRow.Controls.Add(_snooze60Button);
+        _dndRow.Controls.Add(_snoozeCustomBox);
+        _dndRow.Controls.Add(_snoozeCustomOkButton);
         _dndRow.Controls.Add(_cancelSnoozeButton);
         Controls.Add(_dndRow);
         y += 38;
@@ -248,8 +260,20 @@ sealed class TrayPopupForm : Form
 
         var snoozing = _engine.IsSnoozing;
         _dndLabel.Visible = !snoozing;
-        _snooze30Button.Visible = !snoozing;
         _snooze60Button.Visible = !snoozing;
+        _snoozeCustomBox.Visible = !snoozing;
+        _snoozeCustomOkButton.Visible = !snoozing;
         _cancelSnoozeButton.Visible = snoozing;
+    }
+
+    /// <summary>自訂勿擾分鐘數；非正整數視為無效</summary>
+    private int? CustomSnoozeMinutes() =>
+        int.TryParse(_snoozeCustomBox.Text.Trim(), out var m) && m > 0 ? Math.Min(m, 1440) : null;
+
+    private void ApplyCustomSnooze()
+    {
+        if (CustomSnoozeMinutes() is not { } m) return;
+        _engine.Snooze(m);
+        _snoozeCustomBox.Clear();
     }
 }
